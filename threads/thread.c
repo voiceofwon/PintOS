@@ -28,6 +28,8 @@
    that are ready to run but not actually running. */
 static struct list ready_list;
 
+static struct list sleep_list;
+
 /* Idle thread. */
 static struct thread *idle_thread;
 
@@ -108,6 +110,7 @@ thread_init (void) {
 	/* Init the globla thread context */
 	lock_init (&tid_lock);
 	list_init (&ready_list);
+	list_init(&sleep_list);
 	list_init (&destruction_req);
 
 	/* Set up a thread structure for the running thread. */
@@ -306,6 +309,55 @@ thread_yield (void) {
 		list_push_back (&ready_list, &curr->elem);
 	do_schedule (THREAD_READY);
 	intr_set_level (old_level);
+}
+
+//Project 1
+void
+thread_sleep(int64_t ticks){
+	struct thread *curr = thread_current ();
+	enum intr_level old_level;
+
+	ASSERT (!intr_context ());
+
+	old_level = intr_disable ();
+
+	if(curr != idle_thread){
+		curr->wakeup_tick = ticks;
+		list_push_back (&sleep_list, &curr->elem);
+		printf("insert to sleep list\n");
+		thread_block();
+		
+	}
+
+	
+	intr_set_level (old_level);
+}
+
+//Project 1
+void
+thread_wakeup(int64_t ticks){
+
+	struct list_elem *elem_check;
+	enum intr_level old_level;
+
+	elem_check = list_begin (&sleep_list);
+	printf(list_empty(&sleep_list) ? "sleep list empty\n" : "sleep list filled\n");
+	
+
+	old_level = intr_disable ();
+	
+	while(elem_check != list_end(&sleep_list)){
+		struct thread *curr_check = list_entry (elem_check, struct thread, elem);
+
+		if(curr_check->wakeup_tick <= ticks){
+			elem_check = list_remove(elem_check);
+			thread_unblock(curr_check);
+		}
+		else
+			elem_check = list_next(elem_check);
+	}
+	intr_set_level(old_level);
+
 }
 
 /* Sets the current thread's priority to NEW_PRIORITY. */
