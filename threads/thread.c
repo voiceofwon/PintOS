@@ -324,7 +324,6 @@ thread_sleep(int64_t ticks){
 	if(curr != idle_thread){
 		curr->wakeup_tick = ticks;
 		list_push_back (&sleep_list, &curr->elem);
-		printf("insert to sleep list\n");
 		thread_block();
 		
 	}
@@ -341,7 +340,7 @@ thread_wakeup(int64_t ticks){
 	enum intr_level old_level;
 
 	elem_check = list_begin (&sleep_list);
-	printf(list_empty(&sleep_list) ? "sleep list empty\n" : "sleep list filled\n");
+	//printf(list_empty(&sleep_list) ? "sleep list empty\n" : "sleep list filled\n");
 	
 
 	old_level = intr_disable ();
